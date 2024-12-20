@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cbuildon"
-version = "0.0.2"
+version = "0.1.0"
 authors = [{name = "mskz-3110", email = "mskz.saito@gmail.com"}]
 description = "C language multi-platform build tool"
 readme = "README.md"
