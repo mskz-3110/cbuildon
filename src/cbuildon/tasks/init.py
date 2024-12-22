@@ -13,10 +13,17 @@ class InitTask(Task):
     self.OptionParser.parse(argv)
     projectName = self.OptionParser.find_option_from_long_name("project-name").value_if_not(os.path.basename(os.getcwd()))
 
-    directoryPath = "build"
-    os.makedirs(directoryPath, exist_ok = True)
+    for osName in ["windows", "android"]:
+      directoryPath = """build/{}""".format(osName)
+      os.makedirs(directoryPath, exist_ok = True)
+      fileStatus = FileStatus("""{}/.gitignore""".format(directoryPath))
+      if not fileStatus.exists():
+        with open(fileStatus.Path, "w", newline = "\n") as file:
+          file.write("/build")
+          fileStatus.done()
+      print(fileStatus)
 
-    fileStatus = FileStatus("""{}/{}.cmake""".format(directoryPath, projectName))
+    fileStatus = FileStatus("""build/{}.cmake""".format(projectName))
     if not fileStatus.exists():
       with open(fileStatus.Path, "w", newline = "\n") as file:
         file.write("""set(SRC_ROOT_PATH ${{PROJECT_ROOT_PATH}}/src)
@@ -35,17 +42,7 @@ set_target_properties(${{PROJECT_NAME}}-Static PROPERTIES OUTPUT_NAME ${{PROJECT
         fileStatus.done()
     print(fileStatus)
 
-    directoryPath = "build/windows"
-    os.makedirs(directoryPath, exist_ok = True)
-
-    fileStatus = FileStatus("""{}/.gitignore""".format(directoryPath))
-    if not fileStatus.exists():
-      with open(fileStatus.Path, "w", newline = "\n") as file:
-        file.write("/build")
-        fileStatus.done()
-    print(fileStatus)
-
-    fileStatus = FileStatus("""{}/CMakeLists.txt""".format(directoryPath))
+    fileStatus = FileStatus("build/windows/CMakeLists.txt")
     if not fileStatus.exists():
       with open(fileStatus.Path, "w", newline = "\n") as file:
         file.write("""cmake_minimum_required(VERSION 3.8)
@@ -60,6 +57,24 @@ set(TESTS_ROOT_PATH ${{PROJECT_ROOT_PATH}}/tests)
 include_directories(${{TESTS_ROOT_PATH}})
 add_executable(test_{{SRC}} ${{TESTS_ROOT_PATH}}/test_{{SRC}}.c)
 target_link_libraries(test_{{SRC}} ${{PROJECT_NAME}}.lib)
+""".format(projectName = projectName))
+        fileStatus.done()
+    print(fileStatus)
+
+    fileStatus = FileStatus("build/android/CMakeLists.txt")
+    if not fileStatus.exists():
+      with open(fileStatus.Path, "w", newline = "\n") as file:
+        file.write("""cmake_minimum_required(VERSION 3.8)
+project("{projectName}")
+set(PROJECT_ROOT_PATH "../..")
+include(../${{PROJECT_NAME}}.cmake)
+link_directories(${{CMAKE_BINARY_DIR}})
+#target_link_libraries(${{PROJECT_NAME}}-Shared {{LIB}}.so)
+#target_link_libraries(${{PROJECT_NAME}}-Static {{LIB}}.a)
+set(TESTS_ROOT_PATH ${{PROJECT_ROOT_PATH}}/tests)
+include_directories(${{TESTS_ROOT_PATH}})
+add_executable(test_{{SRC}} ${{TESTS_ROOT_PATH}}/test_{{SRC}}.c)
+target_link_libraries(test_{{SRC}} ${{PROJECT_NAME}}.a)
 """.format(projectName = projectName))
         fileStatus.done()
     print(fileStatus)

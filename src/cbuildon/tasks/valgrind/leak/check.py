@@ -1,7 +1,7 @@
 from pyemon.task import *
-from ..command import *
-from ..platform import *
-from ..test import *
+from ....command import *
+from ....platform import *
+from ....test import *
 
 class ValgrindLeakCheckTask(Task):
   def run(self, argv):
