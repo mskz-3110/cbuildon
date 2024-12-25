@@ -1,7 +1,7 @@
 from pyemon.task import *
 from pyemon.status import *
 import os
-from ..scripts.command import *
+from ..scripts.build.cbuildon_scripts.command import *
 
 class InitTask(Task):
   def __init__(self, *args, **kwargs):
@@ -10,155 +10,125 @@ class InitTask(Task):
       Option("p", "project-name", "", "Project name")
     ])
 
+  def copy(self, srcDir, dstDir, fileName):
+    copy(os.path.join(srcDir, fileName), dstDir)
+    print(FileStatus(os.path.relpath(os.path.join(dstDir, fileName)), "done"))
+
+  def copy_if_not_exists(self, srcDir, dstDir, fileName):
+    fileStatus = FileStatus(os.path.relpath(os.path.join(dstDir, fileName)))
+    if copy_if_not_exists(os.path.join(srcDir, fileName), dstDir):
+      fileStatus.done()
+    print(fileStatus)
+
   def run(self, argv):
     self.OptionParser.parse(argv)
 
-    for osName in ["windows", "linux", "android"]:
-      osDirectory = """build/{}""".format(osName)
-      mkdir(osDirectory)
-      fileStatus = FileStatus("""{}/.gitignore""".format(osDirectory))
-      if not fileStatus.exists():
-        with open(fileStatus.Path, "w", newline = "\n") as file:
-          file.write("/build")
-          fileStatus.done()
-      print(fileStatus)
+    srcRootDir = """{}/../scripts""".format(os.path.dirname(__file__))
+    dstRootDir = "."
 
-    fileStatus = FileStatus("cbuildon.py", "done")
-    with open(fileStatus.Path, "w", newline = "\n") as file:
-      file.write('''import sys
-import os
-sys.path.append("""{}/build""".format(os.path.dirname(__file__)))
-from cbuildon_scripts import *
+    for fileName in [".gitignore", "Dockerfile.debian"]:
+      self.copy_if_not_exists(srcRootDir, dstRootDir, fileName)
 
-chdir(os.path.dirname(__file__))
-argv = sys.argv[1:]
-taskName = shift(argv, "")
-match taskName:
-  case "windows.build":
-    windows_build(argv, False)
-  case "windows.rebuild":
-    windows_build(argv, True)
-  case "windows.test":
-    windows_test(argv)
-  case "android.build":
-    android_build(argv, False)
-  case "android.rebuild":
-    android_build(argv, True)
-  case "docker.build":
-    command(["docker", "compose", "build"])
-  case "docker.run":
-    command(["docker", "compose", "run", "--rm", "debian", "bash"])
-  case "linux.build":
-    linux_build(False)
-  case "linux.rebuild":
-    linux_build(True)
-  case "linux.test":
-    linux_test(argv)
-  case _:
-    strings = []
-    if 0 < len(taskName):
-      strings.append("""\\033[40m\\033[31m{}\\033[0m is undefined.""".format(taskName))
-    strings.append("""<Tasks>
-  windows.build <yaml file paths>
+    for fileName in ["cbuildon.py"]:
+      self.copy(srcRootDir, dstRootDir, fileName)
 
-  windows.rebuild <yaml file paths>
+    for dirName in ["build/cbuildon_scripts"]:
+      dstDir = os.path.join(dstRootDir, dirName)
+      rmkdir(dstDir)
+      for srcPath in find("""{}/*.py""".format(os.path.join(srcRootDir, dirName))):
+        self.copy(os.path.dirname(srcPath), dstDir, os.path.basename(srcPath))
 
-  windows.test <test names>
+    for filePath in ["build/common.cmake", "build/lib.cmake", "build/tests.cmake"]:
+      dirName = os.path.dirname(filePath)
+      self.copy_if_not_exists(os.path.join(srcRootDir, dirName), os.path.join(dstRootDir, dirName), os.path.basename(filePath))
 
-  android.build <yaml file paths>
-
-  android.rebuild <yaml file paths>
-
-  docker.build
-
-  docker.run
-
-  linux.build
-
-  linux.rebuild
-
-  linux.test <test names>
-""")
-    sys.exit("\\n".join(strings))
+    fileStatus = FileStatus(os.path.relpath(os.path.join(dstRootDir, "build/android/build.yaml")))
+    if fileStatus.exists() is not True:
+      mkdir(os.path.dirname(fileStatus.Path))
+      with open(fileStatus.Path, "w", encoding = "utf-8", newline = "\n") as file:
+        file.write('''Ninja:
+  - android-34 armeabi-v7a Debug
+  - android-34 armeabi-v7a Release
+  - android-34 arm64-v8a Debug
+  - android-34 arm64-v8a Release
 ''')
     print(fileStatus)
 
-    srcDirectory = """{}/../scripts""".format(os.path.dirname(__file__))
-    dstDirectory = "build/cbuildon_scripts"
-    rm(dstDirectory)
-    mkdir(dstDirectory)
-    for path in find("""{}/*.py""".format(srcDirectory)):
-      fileName = os.path.basename(path)
-      fileStatus = FileStatus("""{}/{}""".format(dstDirectory, fileName), "done")
-      copy("""{}/{}""".format(srcDirectory, fileName), fileStatus.Path)
-      print(fileStatus)
+    fileStatus = FileStatus(os.path.relpath(os.path.join(dstRootDir, "build/ios/build.yaml")))
+    if fileStatus.exists() is not True:
+      mkdir(os.path.dirname(fileStatus.Path))
+      with open(fileStatus.Path, "w", encoding = "utf-8", newline = "\n") as file:
+        file.write('''Xcode:
+  - arm64;arm64e Debug
+  - arm64;arm64e Release
+''')
+    print(fileStatus)
+
+    fileStatus = FileStatus(os.path.relpath(os.path.join(dstRootDir, "build/linux/build.yaml")))
+    if fileStatus.exists() is not True:
+      mkdir(os.path.dirname(fileStatus.Path))
+      with open(fileStatus.Path, "w", encoding = "utf-8", newline = "\n") as file:
+        file.write('''Debug:
+Release:
+''')
+    print(fileStatus)
+
+    fileStatus = FileStatus(os.path.relpath(os.path.join(dstRootDir, "build/macos/build.yaml")))
+    if fileStatus.exists() is not True:
+      mkdir(os.path.dirname(fileStatus.Path))
+      with open(fileStatus.Path, "w", encoding = "utf-8", newline = "\n") as file:
+        file.write('''Xcode:
+  - x86_64;arm64 Debug
+  - x86_64;arm64 Release
+''')
+    print(fileStatus)
+
+    fileStatus = FileStatus(os.path.relpath(os.path.join(dstRootDir, "build/windows/build.yaml")))
+    if fileStatus.exists() is not True:
+      mkdir(os.path.dirname(fileStatus.Path))
+      with open(fileStatus.Path, "w", encoding = "utf-8", newline = "\n") as file:
+        file.write('''Visual Studio 17 2022:
+  - Win32 MD Debug
+  - Win32 MD Release
+  - Win32 MT Debug
+  - Win32 MT Release
+  - x64 MD Debug
+  - x64 MD Release
+  - x64 MT Debug
+  - x64 MT Release
+''')
+    print(fileStatus)
 
     projectName = self.OptionParser.find_option_from_long_name("project-name").Value
     if len(projectName) == 0:
       return
 
-    fileStatus = FileStatus("""build/{}.cmake""".format(projectName))
-    if not fileStatus.exists():
-      with open(fileStatus.Path, "w", newline = "\n") as file:
-        file.write("""set(SRC_ROOT_PATH ${{PROJECT_ROOT_PATH}}/src)
-set(SRCS)
-list(APPEND SRCS ${{SRC_ROOT_PATH}}/{projectName}/{{SRC}}.c)
+    for fileName in ["docker-compose.yaml"]:
+      dst = os.path.join(dstRootDir, fileName)
+      if exists(dst) is not True:
+        with open(dst, "w", encoding = "utf-8", newline = "\n") as file:
+          file.write(file_read(os.path.join(srcRootDir, fileName)).format(projectName = projectName))
+        print(FileStatus(os.path.relpath(dst), "done"))
 
-set(INCS)
-list(APPEND INCS ${{PROJECT_ROOT_PATH}}/inc)
-include_directories(${{INCS}})
-
-add_library(${{PROJECT_NAME}}-Shared SHARED ${{SRCS}})
-set_target_properties(${{PROJECT_NAME}}-Shared PROPERTIES OUTPUT_NAME ${{PROJECT_NAME}})
-add_library(${{PROJECT_NAME}}-Static STATIC ${{SRCS}})
-set_target_properties(${{PROJECT_NAME}}-Static PROPERTIES OUTPUT_NAME ${{PROJECT_NAME}})
+    for osName in ["ios", "macos", "windows", "android", "linux"]:
+      dst = os.path.join(dstRootDir, """build/{}/lib/CMakeLists.txt""".format(osName))
+      if exists(dst) is not True:
+        mkdir(os.path.dirname(dst))
+        with open(dst, "w", encoding = "utf-8", newline = "\n") as file:
+          file.write("""cmake_minimum_required(VERSION 3.13)
+project({projectName})
+include(../../lib.cmake)
 """.format(projectName = projectName))
-        fileStatus.done()
-    print(fileStatus)
+        print(FileStatus(os.path.relpath(dst), "done"))
 
-    fileStatus = FileStatus("build/windows/CMakeLists.txt")
-    if not fileStatus.exists():
-      with open(fileStatus.Path, "w", newline = "\n") as file:
-        file.write("""cmake_minimum_required(VERSION 3.8)
-project("{projectName}")
-set(PROJECT_ROOT_PATH "../..")
-set(CMAKE_CXX_FLAGS "${{CMAKE_CXX_FLAGS}} /source-charset:utf-8")
-include(../${{PROJECT_NAME}}.cmake)
-link_directories(${{CMAKE_BINARY_DIR}})
-#target_link_libraries(${{PROJECT_NAME}}-Shared {{LIB}}.dll)
-#target_link_libraries(${{PROJECT_NAME}}-Static {{LIB}}.lib)
-set(TESTS_ROOT_PATH ${{PROJECT_ROOT_PATH}}/tests)
-include_directories(${{TESTS_ROOT_PATH}})
-set(TEST_NAMES)
-list(APPEND TEST_NAMES test_test_{{SRC}})
-foreach(testName IN LISTS TEST_NAMES)
-  add_executable(${{testName}} ${{TESTS_ROOT_PATH}}/${{testName}}.c)
-  target_link_libraries(${{testName}} ${{PROJECT_NAME}}.lib)
-endforeach()
+    for osName in ["macos", "windows", "linux"]:
+      dst = os.path.join(dstRootDir, """build/{}/tests/CMakeLists.txt""".format(osName))
+      if exists(dst) is not True:
+        mkdir(os.path.dirname(dst))
+        with open(dst, "w", encoding = "utf-8", newline = "\n") as file:
+          file.write("""cmake_minimum_required(VERSION 3.13)
+project({projectName})
+include(../../tests.cmake)
 """.format(projectName = projectName))
-        fileStatus.done()
-    print(fileStatus)
-
-    for osName in ["linux", "android"]:
-      fileStatus = FileStatus("""build/{}/CMakeLists.txt""".format(osName))
-      if not fileStatus.exists():
-        with open(fileStatus.Path, "w", newline = "\n") as file:
-          file.write("""cmake_minimum_required(VERSION 3.8)
-project("{projectName}")
-set(PROJECT_ROOT_PATH "../..")
-include(../${{PROJECT_NAME}}.cmake)
-link_directories(${{CMAKE_BINARY_DIR}})
-#target_link_libraries(${{PROJECT_NAME}}-Shared {{LIB}}.so)
-#target_link_libraries(${{PROJECT_NAME}}-Static {{LIB}}.a)
-set(TESTS_ROOT_PATH ${{PROJECT_ROOT_PATH}}/tests)
-include_directories(${{TESTS_ROOT_PATH}})
-set(TEST_NAMES)
-list(APPEND TEST_NAMES test_test_{{SRC}})
-foreach(testName IN LISTS TEST_NAMES)
-  add_executable(${{testName}} ${{TESTS_ROOT_PATH}}/${{testName}}.c)
-  target_link_libraries(${{testName}} ${{PROJECT_NAME}}.a)
-endforeach()
-""".format(projectName = projectName))
-          fileStatus.done()
-      print(fileStatus)
+        print(FileStatus(os.path.relpath(dst), "done"))
 Task.parse_if_main(__name__, InitTask())

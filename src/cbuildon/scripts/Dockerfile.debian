@@ -1,0 +1,6 @@
+FROM debian:stable-slim
+RUN apt update
+RUN apt install -y python3-yaml
+RUN apt install -y g++
+RUN apt install -y cmake
+RUN apt install -y valgrind

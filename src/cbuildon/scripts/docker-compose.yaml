@@ -1,0 +1,9 @@
+services:
+  debian:
+    container_name: {projectName}-debian
+    image: {projectName}-debian
+    build:
+      context: .
+      dockerfile: ./Dockerfile.debian
+    volumes:
+      - .:/home/{projectName}/c/
