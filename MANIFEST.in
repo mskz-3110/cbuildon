@@ -1,5 +1,6 @@
 recursive-exclude tests *.py
+include src/cbuildon/scripts/build/*.cmake
+include src/cbuildon/scripts/build/*/build.yaml
 include src/cbuildon/scripts/.gitignore
 include src/cbuildon/scripts/docker-compose.yaml
 include src/cbuildon/scripts/Dockerfile.debian
-include src/cbuildon/scripts/build/*.cmake

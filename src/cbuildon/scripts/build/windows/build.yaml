@@ -1,0 +1,9 @@
+Visual Studio 17 2022:
+  - Win32 MD Debug
+  - Win32 MD Release
+  - Win32 MT Debug
+  - Win32 MT Release
+  - x64 MD Debug
+  - x64 MD Release
+  - x64 MT Debug
+  - x64 MT Release

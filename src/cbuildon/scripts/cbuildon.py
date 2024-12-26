@@ -159,9 +159,9 @@ def cmake_build(osName, libRootDir, buildConfig, isClean):
 def os_version(osName):
   match osName:
     case "ios":
-      return command_capture(["xcrun", "--sdk", "iphoneos", "--show-sdk-version"]).stdout.rstrip()
+      return capture_command(["xcrun", "--sdk", "iphoneos", "--show-sdk-version"]).stdout.rstrip()
     case "macos":
-      return command_capture(["sw_vers", "--productVersion"]).stdout.rstrip()
+      return capture_command(["sw_vers", "--productVersion"]).stdout.rstrip()
     case "android":
       with open("""{}/source.properties""".format(os.environ["ANDROID_NDK_ROOT"])) as file:
         for line in file.readlines():
@@ -183,7 +183,7 @@ def os_version(osName):
       filePath = "/etc/debian_version"
       if os.path.isfile(filePath):
         linuxVersion = file_read(filePath).rstrip()
-      return "_".join([linuxName, linuxVersion, "gcc", command_capture(["gcc", "-dumpversion"]).stdout.rstrip()])
+      return "_".join([linuxName, linuxVersion, "gcc", capture_command(["gcc", "-dumpversion"]).stdout.rstrip()])
   return None
 
 def build_config_paths(osName, argv):

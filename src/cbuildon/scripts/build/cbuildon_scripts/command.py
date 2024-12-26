@@ -5,9 +5,8 @@ import os
 import glob
 import shutil
 import yaml
-import pathlib
 
-def color_to_escape(color = None):
+def color_to_escape(color):
   match color:
     case "black":
       return 0
@@ -45,7 +44,7 @@ def command(args, onProcess = None, **kwargs):
       sys.exit(exitArg)
   return result
 
-def command_capture(args, onProcess = None, **kwargs):
+def capture_command(args, onProcess = None, **kwargs):
   return command(args, onProcess, **(dict(capture_output = True, text = True, encoding = "utf-8") | kwargs))
 
 def exists(path):
@@ -62,7 +61,7 @@ def copy(src, dst):
     shutil.copytree(src, dst)
 
 def copy_if_not_exists(src, dst):
-  if os.path.exists(os.path.join(dst, os.path.basename(src))) is not True:
+  if not os.path.exists(os.path.join(dst, os.path.basename(src))):
     copy(src, dst)
     return True
   return False
@@ -78,7 +77,8 @@ def move(src, dst):
   shutil.move(src, dst)
 
 def mkdir(path):
-  os.makedirs(path, exist_ok = True)
+  if 0 < len(path):
+    os.makedirs(path, exist_ok = True)
 
 def rmkdir(path):
   rm(path)
@@ -106,5 +106,17 @@ def yaml_load(filePath):
     return yaml.safe_load(file)
   return {}
 
+def yaml_save(filePath, data):
+  mkdir(os.path.dirname(filePath))
+  with open(filePath, "w", encoding = "utf-8", newline = "\n") as file:
+    yaml.dump(data, file, sort_keys = False, default_flow_style = False, allow_unicode = True)
+
 def file_read(filePath):
-  return pathlib.Path(filePath).read_text()
+  with open(filePath, "r", encoding = "utf-8") as file:
+    return file.read()
+  return ""
+
+def file_write(filePath, data):
+  mkdir(os.path.dirname(filePath))
+  with open(filePath, "w", encoding = "utf-8", newline = "\n") as file:
+    file.write(data)
