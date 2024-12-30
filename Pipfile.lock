@@ -27,12 +27,12 @@
         },
         "pyemon": {
             "hashes": [
-                "sha256:4fd4183b7582d29ce38b6056e1e39a4a4473a2397cd4df2afbd572705b4b4028",
-                "sha256:73200709c580c97c063dfe750ac99c591e7bbbb2c1e82ff4e1d10baa94b5ccdd"
+                "sha256:11a3b72bf9f3c495779fa94942ff81d78dff975775a9179e5fc86529cf9fc047",
+                "sha256:862e15932cab9263affb1617232914de5fbcf42715d725626fe4e165b96b60de"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.13'",
-            "version": "==0.2.1"
+            "version": "==0.2.2"
         },
         "pyyaml": {
             "hashes": [

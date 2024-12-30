@@ -5,6 +5,7 @@ import os
 import glob
 import shutil
 import yaml
+import json
 
 def color_to_escape(color):
   match color:
@@ -106,10 +107,20 @@ def yaml_load(filePath):
     return yaml.safe_load(file)
   return {}
 
-def yaml_save(filePath, data):
+def yaml_save(filePath, data, **kwargs):
   mkdir(os.path.dirname(filePath))
   with open(filePath, "w", encoding = "utf-8", newline = "\n") as file:
-    yaml.dump(data, file, sort_keys = False, default_flow_style = False, allow_unicode = True)
+    yaml.dump(data, file, **(dict(sort_keys = False, default_flow_style = False, allow_unicode = True) | kwargs))
+
+def json_load(filePath):
+    with open(filePath, "r", encoding = "utf-8") as file:
+      return json.load(file)
+    return {}
+
+def json_save(filePath, data, **kwargs):
+  mkdir(os.path.dirname(filePath))
+  with open(filePath, "w", encoding = "utf-8", newline = "\n") as file:
+    json.dump(data, file, **(dict(indent = 2) | kwargs))
 
 def file_read(filePath):
   with open(filePath, "r", encoding = "utf-8") as file:

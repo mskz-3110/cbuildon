@@ -1,5 +1,6 @@
 import sys
 import os
+import platform
 sys.path.append(os.path.join(os.path.dirname(__file__), "build"))
 from cbuildon_scripts import *
 
@@ -236,6 +237,14 @@ def setup_android():
   if "ANDROID_NDK_ROOT" not in os.environ:
     os.environ["ANDROID_NDK_ROOT"] = os.path.abspath("ext/android")
 
+dockerRunArgs = ["docker", "compose", "run", "--rm", "debian"]
+def linux_task_run(taskName, argv, onProcess):
+  match platform.system():
+    case "Linux":
+      onProcess(argv)
+    case _:
+      command(dockerRunArgs + ["python3", "/home/ciokomb/c/cbuildon.py", taskName])
+
 chdir(os.path.dirname(__file__))
 argv = sys.argv[1:]
 taskName = shift(argv, "")
@@ -243,13 +252,13 @@ match taskName:
   case "docker.build":
     command(["docker", "compose", "build"])
   case "docker.run.command":
-    print(" ".join(["docker", "compose", "run", "--rm", "debian", "bash"]))
+    print(" ".join(dockerRunArgs + ["bash"]))
   case "linux.build":
-    build("linux", argv, False)
+    linux_task_run(taskName, argv, lambda argv: build("linux", argv, False))
   case "linux.rebuild":
-    build("linux", argv, True)
+    linux_task_run(taskName, argv, lambda argv: build("linux", argv, True))
   case "linux.test":
-    test("linux", argv)
+    linux_task_run(taskName, argv, lambda argv: test("linux", argv))
   case "windows.build":
     build("windows", argv, False)
   case "windows.rebuild":
