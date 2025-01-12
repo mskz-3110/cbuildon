@@ -19,6 +19,9 @@ def cmake_msvc_runtime_library(runtime, configuration):
   return msvcRuntimeLibrary
 
 def cmake_build(osName, libRootDir, buildConfig, isClean):
+  project = json_load(os.path.join(os.path.dirname(__file__), "build/project.json"))
+  libDirOptionName = "_".join([project["projectNamePrefix"], "LIB_DIR"])
+  cxxFlagsOptionName = "_".join([project["projectNamePrefix"], "CXX_FLAGS"])
   isMoveLib = os.path.basename(os.getcwd()) == "lib"
   for generator in buildConfig.keys():
     match osName:
@@ -38,7 +41,7 @@ def cmake_build(osName, libRootDir, buildConfig, isClean):
               "-D", "CMAKE_MACOSX_BUNDLE=YES",
               "-D", "CMAKE_SYSTEM_NAME=iOS",
               "-D", "CMAKE_OSX_SYSROOT=iphoneos",
-              "-D", "=".join(["LIB_DIR", libDir]),
+              "-D", "=".join([libDirOptionName, libDir]),
               "-B", buildDir,
             ])
           options = []
@@ -69,7 +72,7 @@ def cmake_build(osName, libRootDir, buildConfig, isClean):
               "cmake",
               "-G", "Xcode",
               "-D", "=".join(["CMAKE_OSX_ARCHITECTURES", archs]),
-              "-D", "=".join(["LIB_DIR", libDir]),
+              "-D", "=".join([libDirOptionName, libDir]),
               "-B", buildDir,
             ])
           command([
@@ -96,8 +99,8 @@ def cmake_build(osName, libRootDir, buildConfig, isClean):
                 "-G", generator,
                 "-A", arch,
                 "-D", "=".join(["CMAKE_MSVC_RUNTIME_LIBRARY", cmake_msvc_runtime_library(runtime, configuration)]),
-                "-D", "=".join(["CXX_FLAGS", "/source-charset:utf-8"]),
-                "-D", "=".join(["LIB_DIR", libDir]),
+                "-D", "=".join([cxxFlagsOptionName, "/source-charset:utf-8"]),
+                "-D", "=".join([libDirOptionName, libDir]),
                 "-B", buildDir,
               ])
             command([
@@ -125,7 +128,7 @@ def cmake_build(osName, libRootDir, buildConfig, isClean):
                 "-D", """CMAKE_TOOLCHAIN_FILE={}/build/cmake/android.toolchain.cmake""".format(androidNdkRoot),
                 "-D", "=".join(["ANDROID_PLATFORM", platform]),
                 "-D", "=".join(["ANDROID_ABI", abi]),
-                "-D", "=".join(["LIB_DIR", libDir]),
+                "-D", "=".join([libDirOptionName, libDir]),
                 "-B", buildDir,
               ])
             command([
@@ -146,7 +149,7 @@ def cmake_build(osName, libRootDir, buildConfig, isClean):
             mkdir("build")
             command([
               "cmake",
-              "-D", "=".join(["LIB_DIR", libDir]),
+              "-D", "=".join([libDirOptionName, libDir]),
               "-B", buildDir,
             ])
           command([
@@ -243,7 +246,7 @@ def linux_task_run(taskName, argv, onProcess):
     case "Linux":
       onProcess(argv)
     case _:
-      command(dockerRunArgs + ["python3", "/home/ciokomb/c/cbuildon.py", taskName])
+      command(dockerRunArgs + ["python3", "/home/cbuildon.py", taskName])
 
 chdir(os.path.dirname(__file__))
 argv = sys.argv[1:]

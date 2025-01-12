@@ -6,4 +6,4 @@ services:
       context: .
       dockerfile: ./Dockerfile.debian
     volumes:
-      - .:/home/{projectName}/c/
+      - .:/home/
