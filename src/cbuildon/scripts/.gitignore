@@ -1,2 +1,6 @@
 /build/*/*/build
 /lib
+/ext/android
+/ext/ninja
+__pycache__
+.vscode

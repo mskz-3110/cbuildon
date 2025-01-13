@@ -17,15 +17,6 @@ class InitTask(Task):
     for dirName in ["inc", "src", "tests", "ext"]:
       mkdir(dirName)
 
-    dst = "ext/.gitignore"
-    status = Status(os.path.relpath(dst))
-    if not exists(dst):
-      file_write(dst, """/android
-/ninja
-""")
-      status.done()
-    print(status)
-
     for baseName in [".gitignore", "Dockerfile.debian"]:
       self.copy_if_not_exists(srcRootDir, ".", baseName)
 
