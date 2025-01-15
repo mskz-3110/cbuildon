@@ -4,11 +4,11 @@ import platform
 sys.path.append(os.path.join(os.path.dirname(__file__), "build"))
 from cbuildon_scripts import *
 
-def move_lib(libDir, buildDirPattern, exts):
+def copy_lib(libDir, buildDirPattern, exts):
   for ext in exts:
     for path in find("""{}/*.{}""".format(buildDirPattern, ext)):
       mkdir(libDir)
-      move(path, libDir)
+      copy(path, libDir)
 
 def cmake_msvc_runtime_library(runtime, configuration):
   msvcRuntimeLibrary = "MultiThreaded"
@@ -57,7 +57,7 @@ def cmake_build(osName, libRootDir, buildConfig, isClean):
               "CODE_SIGNING_ALLOWED=NO",
             ] + options)
           if isMoveLib:
-            move_lib(libDir, """{}/{}-*""".format(buildDir, configuration), ["dylib", "a"])
+            copy_lib(libDir, """{}/{}-*""".format(buildDir, configuration), ["dylib", "a"])
       case "macos":
         for combination in buildConfig[generator]:
           archs, configuration = combination.split(" ")
@@ -81,7 +81,7 @@ def cmake_build(osName, libRootDir, buildConfig, isClean):
               "--config", configuration,
             ])
           if isMoveLib:
-            move_lib(libDir, """{}/{}""".format(buildDir, configuration), ["dylib", "a"])
+            copy_lib(libDir, """{}/{}""".format(buildDir, configuration), ["dylib", "a"])
       case "windows":
         for generator in buildConfig.keys():
           version = generator.split(" ")[-1]
@@ -109,7 +109,7 @@ def cmake_build(osName, libRootDir, buildConfig, isClean):
               "--config", configuration,
             ])
             if isMoveLib:
-              move_lib(libDir, """{}/{}""".format(buildDir, configuration), ["dll", "lib"])
+              copy_lib(libDir, """{}/{}""".format(buildDir, configuration), ["dll", "lib"])
       case "android":
         androidNdkRoot = os.environ["ANDROID_NDK_ROOT"]
         for generator in buildConfig.keys():
@@ -137,7 +137,7 @@ def cmake_build(osName, libRootDir, buildConfig, isClean):
               "--config", configuration,
             ])
             if isMoveLib:
-              move_lib(libDir, buildDir, ["so", "a"])
+              copy_lib(libDir, buildDir, ["so", "a"])
       case "linux":
         for configuration in buildConfig.keys():
           buildDir = configuration
@@ -158,7 +158,7 @@ def cmake_build(osName, libRootDir, buildConfig, isClean):
             "--config", configuration,
           ])
           if isMoveLib:
-            move_lib(libDir, buildDir, ["so", "a"])
+            copy_lib(libDir, buildDir, ["so", "a"])
 
 def os_version(osName):
   match osName:
